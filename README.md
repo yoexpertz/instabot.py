@@ -40,7 +40,7 @@ On Windows you might have to use `python` without the version (`3`) suffix. Expe
   - `instabot-py -c myconfiguration.yml` or `python3 -m instabot_py -c myconfiguration.yml`
   - `instabot-interactive` to use the legacy interactive mode (deprecated and will be removed soon)
 
-- ** Configuration  ** ⚙️
+- **Configuration** ⚙️
 
 By running `instabot-py`,  the Bot reads its configuration from instabot.config.yml in your current directory.
 you can run the bot with a different configuration `instabot-py -c myconfiguration.yml`
@@ -83,17 +83,19 @@ The `%username%.session` file stores your session with Instagram to avoid re-log
 | database             | dict| Contains the database configuration                  | {"type": "sql", "connection_string": "sqlite:///{{login}}.db"}   |
 | session\_file        | str | change the name of session file so to avoid having to login every time. Set False to disable. | "username.session"   |
 | like_per_day         | int | DEPRECATED, WILL BE REMOVED SOON, REPLACED BY like_per_run |  |
-| like_per_run         | int | Number of photos to like per day (over 1000 may cause throttling) | 1000 |
+| like_per_run         | int | Number of photos to like per day (over 1000 may cause throttling) | 296 |
+| like_followers_per_run | int | Number of your old followers to like their last photo per day (set to 0 to disable) | 0 |
 | media_max_like       | int | Maximum number of likes on photos to like (set to 0 to disable) | 0    |
 | media_min_like       | int | Minimum number of likes on photos to like (set to 0 to disable) | 0    |
 | follow_per_day       | int | DEPRECATED, WILL BE REMOVED SOON, REPLACED BY follow_per_run                              | 0    |
-| follow_per_run       | int | Users to follow per day                              | 0    |
+| follow_per_run       | int | Users to follow per day                              | 156    |
 | follow_time          | int | Seconds to wait before unfollowing                   | 5 * 60 * 60 |
+| follow_attempts      | int | Attempts to make to follow someone                   | 10 |
 | user_min_follow      | int | Check user before following them if they have X minimum of followers. Set 0 to disable                   | 0 |
 | user_max_follow      | int | Check user before following them if they have X maximum of followers. Set 0 to disable                   | 0 |
 | follow_time_enabled  | bool| REMOVED, TO DISBALE Follow_time, just set it to 0  | -- |
 | unfollow_per_day     | int | DEPRECATED, WILL BE REMOVED SOON, REPLACED BY unfollow_per_run                            | 0    |
-| unfollow_per_run     | int | Users to unfollow per day                            | 0    |
+| unfollow_per_run     | int | Users to unfollow per day                            | 199    |
 | unfollow_recent_feed | bool| If enabled, will populate database with users from recent feed and unfollow if they meet the conditions. Disable if you only want the bot to unfollow people it has previously followed. | True |
 | unlike_per_day     | int | DEPRECATED, WILL BE REMOVED SOON, REPLACED BY unlike_per_run                          | 0    |
 | unlike_per_run     | int | Number of media to unlike that the bot has previously liked. Set to 0 to disable.                           | 0    |
