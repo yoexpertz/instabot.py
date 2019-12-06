@@ -69,7 +69,9 @@ class InstaBot:
         self.persistence.bot = self
         self.session_file = self.config.get("session_file")
 
-        self.user_agent = random.sample(self.config.get("list_of_ua"), 1)[0]
+        self.user_agent = self.config.get('user_agent')
+        if not self.user_agent:
+            self.user_agent = random.sample(self.config.get('list_of_ua'), 1)[0]
         self.bot_start = datetime.datetime.now()
         self.bot_start_ts = time.time()
         self.start_at_h = self.config.get("start_at_h")
@@ -211,8 +213,9 @@ class InstaBot:
         self.ban_sleep_time = self.config.get("ban_sleep_time")
         self.unwanted_username_list = self.config.get("unwanted_username_list")
         now_time = datetime.datetime.now()
-        self.logger.info(
-            "Instabot v{} started at {}:".format(instabot_py.__version__, now_time.strftime("%d.%m.%Y %H:%M")))
+        self.logger.info("Instabot v{} started at {}:".format(
+            instabot_py.__version__, now_time.strftime("%d.%m.%Y %H:%M")))
+        self.logger.debug(f"User agent '{self.user_agent}' is used")
         self.prog_run = True
         self.next_iteration = {
             "Like": 0,

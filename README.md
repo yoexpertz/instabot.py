@@ -82,6 +82,7 @@ The `%username%.session` file stores your session with Instagram to avoid re-log
 | end\_at\_m           | int | End program at the min                               | 59   |
 | database             | dict| Contains the database configuration                  | {"type": "sql", "connection_string": "sqlite:///{{login}}.db"}   |
 | session\_file        | str | change the name of session file so to avoid having to login every time. Set False to disable. | "username.session"   |
+| user_agent           | str | Custom User Agent to look like a real browser        | None |
 | like_per_day         | int | DEPRECATED, WILL BE REMOVED SOON, REPLACED BY like_per_run |  |
 | like_per_run         | int | Number of photos to like per day (over 1000 may cause throttling) | 296 |
 | like_followers_per_run | int | Number of your old followers to like their last photo per day (set to 0 to disable) | 0 |
