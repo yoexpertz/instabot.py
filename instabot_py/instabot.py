@@ -81,8 +81,8 @@ class InstaBot:
         self.window_check_every = self.config.get("window_check_every")
         self.unfollow_break_min = self.config.get("unfollow_break_min")
         self.unfollow_break_max = self.config.get("unfollow_break_max")
-        self.user_blacklist = self.config.get("user_blacklist")
-        self.tag_blacklist = self.config.get("tag_blacklist")
+        self.user_blacklist = self.config.get('user_blacklist')
+        self.tag_blacklist = self.config.get('tag_blacklist')
         self.unfollow_whitelist = self.config.get("unfollow_whitelist")
         self.comment_list = self.config.get('comment_list')
 
@@ -541,10 +541,9 @@ class InstaBot:
             return self.url_media % shortcode
         elif media_id:
             media_id = int(media_id)
-            alphabet = (
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-            )
-            shortened_id = ""
+            alphabet = ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01"
+                        "23456789-_")
+            shortened_id = ''
             while media_id > 0:
                 media_id, idx = divmod(media_id, 64)
                 shortened_id = alphabet[idx] + shortened_id
@@ -560,58 +559,52 @@ class InstaBot:
         except Exception as exc:
             logging.exception(exc)
 
-    def media_contains_blacklisted_tag(self, media):
-        try:
-            if len(media["node"]["edge_media_to_caption"]["edges"]) > 1:
-                caption = media["node"]["edge_media_to_caption"]["edges"][0]["node"]["text"].encode(
-                    "ascii", errors="ignore")
-
-                tag_blacklist = set(self.tag_blacklist)
-                tags = {tag.decode("ASCII").strip("#").lower()
-                        for tag in caption.split()
-                        if (tag.decode("ASCII")).startswith("#")}
-                matching_tags = tags.intersection(tag_blacklist)
-                if matching_tags:
-                    self.logger.debug("Media ignored tag(s): {}".format(", ".join(matching_tags)))
-                    return True
-        except Exception as exc:
-            self.logger.warning("Except on media_contains_blacklisted_tag")
-            self.logger.exception(exc)
-
-    def verify_media_misc(self, media):
-        if media["node"]["owner"]["id"] == self.user_id:
-            self.logger.debug("Keep calm - It's your own media ;)")
-            return True
-
-        if self.persistence.check_already_liked(media_id=media["node"]["id"]):
-            self.logger.info("Keep calm - It's already liked ;)")
-            return True
-
-    def verify_media_owner_blacklisted(self, media):
-
-        for username, userid, in self.user_blacklist.items():
-            if media["node"]["owner"]["id"] == userid:
-                self.logger.debug(
-                    f"Media owned by blacklisted user: {username}"
-                )
-                return True
-
-    def verify_media_number_of_likes(self, media):
-        like_count = media["node"]["edge_liked_by"]["count"]
-        return (like_count <= self.media_max_like and like_count >= self.media_min_like) \
-               or (self.media_max_like == 0 and like_count >= self.media_min_like) \
-               or (self.media_min_like == 0 and like_count <= self.media_max_like) \
-               or (self.media_min_like == 0 and self.media_max_like == 0)
-
     def verify_media(self, media):
-        return not self.verify_media_misc(media) \
-               and not self.media_contains_blacklisted_tag(media) \
-               and not self.verify_media_number_of_likes(media) \
-               and not self.verify_media_owner_blacklisted(media)
+        # verify media_min_like requirements
+        like_count = media['node']['edge_liked_by']['count']
+        if not (self.media_min_like and like_count >= self.media_min_like):
+            self.logger.debug(f"Will not like this media: number of likes "
+                              f"{like_count} does not meet media_min_like "
+                              f"requirements")
+            return False
 
-    def like(self, media_id):
+        # verify media_max_like requirements
+        if not (self.media_max_like and like_count <= self.media_max_like):
+            self.logger.debug(f"Will not like this media: number of likes "
+                              f"{like_count} does not meet media_max_like "
+                              f"requirements")
+            return False
+
+        # verify blacklisted tags
+        edges = media['node']['edge_media_to_caption']['edges']
+        if edges:
+            caption = edges[0]['node']['text'].encode('ascii', errors='ignore')
+            tag_blacklist = set(self.tag_blacklist)
+            tags = {tag.decode('ASCII').strip('#').lower()
+                    for tag in caption.split()
+                    if (tag.decode('ASCII')).startswith('#')}
+            matching_tags = tags.intersection(tag_blacklist)
+            if matching_tags:
+                self.logger.debug(f"Will not like this media: it has "
+                                  f"blacklisted tag(s): "
+                                  f"{', '.join(matching_tags)}")
+                return False
+
+        # verify blacklisted users
+        for username, user_id in self.user_blacklist.items():
+            if media['node']['owner']['id'] == user_id:
+                self.logger.debug(f"Will not like this media: it is owned by "
+                                  f"blacklisted user: {username}")
+                return False
+
+        # verify if it is your media
+        if media['node']['owner']['id'] == self.user_id:
+            self.logger.debug("Will not like this media: it is your media")
+            return False
+        return True
+
+    def like(self, media_id, media_url):
         """ Send http request to like media by ID """
-        media_to_like_url = self.get_media_url(media_id)
         try:
             resp = self.s.post(self.url_likes % media_id)
         except Exception as exc:
@@ -625,10 +618,11 @@ class InstaBot:
             self.persistence.insert_media(media_id=media_id,
                                           status=str(resp.status_code))
             self.logger.info(f"Could not like media: id: {media_id}, "
-                             f"url: {media_to_like_url}, "
+                             f"url: {media_url}, "
                              f"status code: {resp.status_code}. "
                              f"Reason: {resp.text}")
-        return False
+            return False
+        return True
 
     def unlike(self, media_id):
         """ Send http request to unlike media by ID """
@@ -817,15 +811,16 @@ class InstaBot:
         if self.iteration_ready('like') and media:
             self.init_next_iteration('like')
             media_id = media['node']['id']
-            media_to_like_url = self.get_media_url(media_id)
+            media_url = self.get_media_url(media_id)
             self.logger.debug(f"Trying to like media #{self.like_counter + 1}: "
-                              f"id: {media_id}, url: {media_to_like_url}")
-            if self.like(media_id):
-                self.error_400 = 0
-                self.like_counter += 1
-                self.logger.info(f"Liked media #{self.like_counter}: "
-                                 f"id: {media_id}, url: {media_to_like_url}")
-                return True
+                              f"id: {media_id}, url: {media_url}")
+            if self.verify_media(media):
+                if self.like(media_id, media_url):
+                    self.error_400 = 0
+                    self.like_counter += 1
+                    self.logger.info(f"Liked media #{self.like_counter}: "
+                                     f"id: {media_id}, url: {media_url}")
+                    return True
         return False
 
     def like_followers_last_media(self):
