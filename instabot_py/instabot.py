@@ -562,14 +562,14 @@ class InstaBot:
     def verify_media(self, media):
         # verify media_min_like requirements
         like_count = media['node']['edge_liked_by']['count']
-        if not (self.media_min_like and like_count >= self.media_min_like):
+        if self.media_min_like and like_count < self.media_min_like:
             self.logger.debug(f"Will not like this media: number of likes "
                               f"{like_count} does not meet media_min_like "
                               f"requirements")
             return False
 
         # verify media_max_like requirements
-        if not (self.media_max_like and like_count <= self.media_max_like):
+        if self.media_max_like and like_count > self.media_max_like:
             self.logger.debug(f"Will not like this media: number of likes "
                               f"{like_count} does not meet media_max_like "
                               f"requirements")
