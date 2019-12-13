@@ -433,20 +433,24 @@ class InstaBot:
 
         if successfulLogin:
             r = self.s.get("https://www.instagram.com/")
-            self.csrftoken = re.search('(?<="csrf_token":")\w+', r.text).group(0)
+            self.csrftoken = re.search('(?<="csrf_token":")\w+',
+                                       r.text).group(0)
             self.s.cookies["csrftoken"] = self.csrftoken
             self.s.headers.update({"X-CSRFToken": self.csrftoken})
             finder = r.text.find(self.user_login)
             if finder != -1:
                 self.user_id = self.get_user_id_by_username(self.user_login)
                 self.login_status = True
-                self.logger.info(f"{self.user_login} login success!\n")
+                self.logger.info(f"{self.user_login} has logged in "
+                                 f"successfully!")
                 if self.session_file is not None:
-                    self.logger.info(
-                        f"Saving cookies to session file {self.session_file}"
-                    )
+                    self.logger.info(f"Saving cookies to session file "
+                                     f"{self.session_file}")
                     with open(self.session_file, "wb") as output:
-                        pickle.dump(self.s.cookies, output, pickle.HIGHEST_PROTOCOL)
+                        pickle.dump(self.s.cookies, output,
+                                    pickle.HIGHEST_PROTOCOL)
+                # we need to wait between 3 to 9 seconds just after login
+                time.sleep(random.gauss(7, 2))
             else:
                 self.login_status = False
                 self.logger.error("Login error! Check your login data!")
@@ -454,10 +458,8 @@ class InstaBot:
                     try:
                         os.remove(self.session_file)
                     except:
-                        self.logger.info(
-                            "Could not delete session file. Please delete manually"
-                        )
-
+                        self.logger.info("Could not delete a session file. "
+                                         "Please delete it manually")
                 self.prog_run = False
         else:
             self.logger.error("Login error! Connection error!")
@@ -522,6 +524,8 @@ class InstaBot:
     def get_medias(self):
         """ Get medias by random tag defined in configuration """
         while True:
+            # we need to wait between 3 to 8 seconds before we retrieve medias
+            time.sleep(random.gauss(6, 1.5))
             tag = random.choice(self.tag_list)
             medias_raw = self.get_media_id_by_tag(tag)
             self.logger.debug(f"Retrieved {len(medias_raw)} medias")
@@ -533,6 +537,8 @@ class InstaBot:
                               f"processing medias ")
             if medias:
                 break
+        # we need to wait between 3 to 8 seconds after we retrieved medias
+        time.sleep(random.gauss(6, 1.5))
         return medias
 
     def get_media_url(self, media_id=None, shortcode=None):
@@ -604,7 +610,15 @@ class InstaBot:
         return True
 
     def like(self, media_id, media_url):
-        """ Send http request to like media by ID """
+        """ Send http request to view media by ID and then like it """
+        # we are GETting a media first
+        try:
+            self.s.get(self.url_likes % media_id)
+        except Exception as exc:
+            logging.exception(exc)
+            return False
+        # we need to wait between 2 to 8 seconds before we like a media
+        time.sleep(random.gauss(6, 1.5))
         try:
             resp = self.s.post(self.url_likes % media_id)
         except Exception as exc:
@@ -1165,7 +1179,7 @@ class InstaBot:
 
     def init_next_iteration(self, action):
         self.next_iteration[action] = self.generate_time(
-            getattr(self, action + "_delay", -2 * time.time())) + time.time()
+            getattr(self, action + '_delay', -2 * time.time())) + time.time()
 
     def iteration_ready(self, action):
         action_counter = getattr(self, action + "_counter", 0)
@@ -1173,10 +1187,6 @@ class InstaBot:
         registered_time = self.next_iteration.get(action, 0)
         return action_counter < action_counter_per_run \
                and 0 <= registered_time < time.time()
-
-    def generate_time(self, time):
-        """ Make some random for next iteration"""
-        return time * 0.9 + time * 0.2 * random.random()
 
     def generate_comment(self):
         c_list = list(itertools.product(*self.comment_list))
@@ -1255,6 +1265,11 @@ class InstaBot:
             logging.exception(exc)
             media_on_feed = []
         return media_on_feed
+
+    @staticmethod
+    def generate_time(t):
+        """ Make some random for next iteration"""
+        return random.gauss(t, t/10)
 
     @staticmethod
     def time_dist(to_time, from_time):
