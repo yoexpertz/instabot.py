@@ -60,9 +60,10 @@ class InstaBot:
         else:
             self.config = config
 
-        login = self.config.get("login")
-        password = self.config.get("password")
-        if login is None or password is None:
+        login = self.config.get('login')
+        password = self.config.get('password')
+        if not login or login == 'YOUR_USERNAME' or \
+                not password or password == 'YOUR_PASSWORD':
             raise CredsMissing()
 
         self.persistence = PersistenceManager(self.config.get("database"))

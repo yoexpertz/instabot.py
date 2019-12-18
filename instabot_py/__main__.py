@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import logging.config
-from collections import OrderedDict
-
+import instabot_py
+import os
 import requests
+import shutil
 import yaml
+import logging.config
+
+from collections import OrderedDict
 from config42 import ConfigManager
 from config42.handlers import ArgParse
-
-import instabot_py
 from instabot_py import InstaBot
 from instabot_py.default_config import DEFAULT_CONFIG
 from instabot_py.instabot import CredsMissing
@@ -221,7 +222,8 @@ schema = [
     ), dict(
         name="Ignore updates",
         key="ignore_updates",
-        source=dict(argv=["--ignore-updates"], argv_options=dict(nargs='?', const=True)),
+        source=dict(argv=["--ignore-updates"], argv_options=dict(nargs='?',
+                                                                 const=True)),
         description="Ignore updates",
         required=False
     ), dict(
@@ -230,8 +232,14 @@ schema = [
         source=dict(argv=["--dump"], argv_options=dict(nargs='?', const=True)),
         description="Dumps current configuration",
         required=False
+    ), dict(
+        name="Create configuration",
+        key="create_configuration",
+        source=dict(argv=["--create-config"], argv_options=dict(nargs='?',
+                                                                const=True)),
+        description="Creates a new configuration file",
+        required=False
     )
-
 ]
 
 defaults = {'config42': OrderedDict(
@@ -242,6 +250,23 @@ defaults = {'config42': OrderedDict(
     ]
 )
 }
+
+
+def create_configuration():
+    if not os.path.isfile('instabot.config.yml'):
+        src_dir = os.path.dirname(os.path.realpath(__file__))
+        dst_dir = os.path.abspath(os.curdir)
+        src_file = os.path.join(src_dir, 'sample.instabot.config.yml')
+        shutil.copy(src_file, dst_dir)
+
+        dst_file = os.path.join(dst_dir, 'sample.instabot.config.yml')
+        new_dst_file_name = os.path.join(dst_dir, 'instabot.config.yml')
+        os.rename(dst_file, new_dst_file_name)
+        print(f"Configuration file 'instabot.config.yml' has been created in "
+              f"'{dst_dir}' folder. Please modify it according to your needs "
+              f"and start 'instabot-py' again.")
+    else:
+        print("You already have 'instabot.config.yaml' in the folder.")
 
 
 def get_last_version():
@@ -282,35 +307,55 @@ def main():
         conf.pop('dump_configuration')
         print(yaml.dump(conf))
         exit(0)
+
+    if config.get('create_configuration'):
+        create_configuration()
+        exit(0)
+
     if config.get('show_version'):
         print("Installed version {}".format(instabot_py.__version__))
         exit(0)
 
     if not config.get('ignore_updates'):
         last_version = get_last_version()
-        if last_version and last_version != instabot_py.__version__:
-            print("Newer version available: {}, The current version: {}".format(last_version, instabot_py.__version__))
-            print("To update, please type \n python3 -m pip install instabot-py --upgrade --no-cache-dir ")
-            print("")
-            print("  > You can ignore warning, run the instabot with --ignore-updates flag")
+        current_version = instabot_py.__version__
+        if last_version and last_version != current_version:
+            print(
+                f"""Newer version is available: {last_version}. The current \
+version is: {current_version}.
+To update instabot-py, please perform: 
+    python3 -m pip install instabot-py --upgrade --no-cache-dir
+                
+    > You can also ignore this warning and upgrade instabot-py later. In this \
+case, please run the instabot with '--ignore-updates' flag.""")
             exit(0)
+
+    if config_file:
+        print(f"Reading configuration ({len(_config.as_dict())} settings) from"
+              f" {config_file}")
+    elif os.path.isfile('instabot.config.yml'):
+        print("Using 'instabot.config.yml' as a configuration, add "
+              "'-c your-config.yml' if you want to use your config file")
+    else:
+        print("Configuration file has not been found. Please run the instabot "
+              "with '--create-config' flag.")
+        exit(0)
 
     try:
         bot = InstaBot(config=config)
-        if config_file:
-            bot.logger.info(f"Reading configuration ({len(_config.as_dict())} settings) from {config_file}")
-        else:
-            bot.logger.info(f"Use the default configuration, add '-c your-config.yml' to specify your config")
-
     except CredsMissing:
-        print("You didn't provide your Instagram login & password or you didn't specify the configuration file")
-        print("Try again :")
-        print("")
-        print("   instabot-py --login YOUR_LOGIN --password YOUR_PASSWORD")
-        print("   instabot-py -c your-config.yml")
-        print("You can export and modify the default configuration by typing the command below")
-        print("    instabot-py --dump")
+        print(
+            """We could not find your Instagram login and/or password. Maybe \
+you did not change the default ones in the config file.
+You can specify them either directly, correct them in the default config file \
+or use your own config file:
+
+    instabot-py --login YOUR_LOGIN --password YOUR_PASSWORD    
+or
+    instabot-py -c your-config.yml
+""")
         exit(1)
+
     bot.mainloop()
 
 

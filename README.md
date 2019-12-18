@@ -1,6 +1,3 @@
-#### This project will be frozen until we will find good developers team. We stopped project development. If you want to be in developer team - email me. Use last version on your own risk. 
-
-
 # Instabot.py 🤖 🌟
 
 **Instabot.py** is an extremely light instagram bot that uses the undocumented Web API. Unlike other bots, Instabot.py does _not_ require Selenium or a WebDriver. Instead, it interacts with the API over simple HTTP Requests. It runs on most systems, including Raspberry Pi.
@@ -24,35 +21,36 @@
 
 On Windows you might have to use `python` without the version (`3`) suffix. Experienced users should use virtualenv.
 
-- **If your version is below 3.6, we recommend you install the latest Python 3.7**
+- **If your version is below 3.6, we recommend you install the latest Python 3.7 or 3.8**
 
   - [Python on Windows](https://github.com/instabot-py/instabot.py/wiki/Installing-Python-on-Windows)
   - [Python on Mac](https://github.com/instabot-py/instabot.py/wiki/Installing-Python-3.7-on-macOS)
   - [Python on Raspberry Raspbian / Debian / Ubuntu](https://github.com/instabot-py/instabot.py/wiki/Installing-Python-3.7-on-Raspberry-Pi)
 
-- **Install instabot.py from PyPi repository**
+**Installation**
 
-  - `python3 -m pip install instabot-py`
+- From PyPi (Stable):
 
-- **Start the bot** 🏁
+```
+python3 -m pip install instabot-py
+```
+- From sources (Bleeding edge):
+
+```
+python3 -m pip install git+https://github.com/instabot-py/instabot.py
+```
+**Configuration** ⚙️
+
+Run `instabot-py --create-config` command and a default configuration will be created in your current directory: `instabot.config.yml`. It should be modified according the needs.
+You can also run the bot with a different configuration file using `-c` flag: `instabot-py -c myconfiguration.yml`
+
+**Start the bot** 🏁
 
   - `instabot-py` or `python3 -m instabot_py`
   - `instabot-py -c myconfiguration.yml` or `python3 -m instabot_py -c myconfiguration.yml`
-  - `instabot-interactive` to use the legacy interactive mode (deprecated and will be removed soon)
-
-- **Configuration** ⚙️
-
-By running `instabot-py`,  the Bot reads its configuration from instabot.config.yml in your current directory.
-you can run the bot with a different configuration `instabot-py -c myconfiguration.yml`
 
 
-- **Legacy Interactive Mode (DEPRECATED)** ⚙️
-
-When you first run `instabot-py -i` a file called `config.ini` will be created in your current directory, along with an SQLite DB.
-
-After the initial configuration, you can manually edit `config.ini` with a text editor. Restart the bot for changes to take effect.
-
-The `%username%.db` file contains a record of the posts the bot has liked, and the users it has followed/unfollowed.
+The `%username%.db` file contains records of posts the bot has liked, and the users who has been followed/unfollowed.
 
 The `%username%.session` file stores your session with Instagram to avoid re-logins each time you start the bot.
 
@@ -61,15 +59,6 @@ The `%username%.session` file stores your session with Instagram to avoid re-log
 - `python3 -m pip install instabot-py --no-cache-dir --upgrade`
 - `pip3 install instabot-py --no-cache-dir --upgrade`
 
-## Install methods
-
-**Recommended: From PyPi:** (Stable)
-
-- `python3 -m pip install instabot-py`
-
-**From sources:**  (Bleeding edge)
-
-- `python3 -m pip install git+https://github.com/instabot-py/instabot.py`
 
 ## Parameters
 | Parameter            | Type|                Description                           |        Default value             |
@@ -119,17 +108,17 @@ The `%username%.session` file stores your session with Instagram to avoid re-log
 | unfollow_everyone  | bool | Unfollow Condition: Will unfollow everyone in unfollow queue (wildcard condition) | False |
 
 ## Contributing
-Please feel free to contribute and submit PR requests. All help is appreciated. Look for issues with the label [needs help](https://github.com/instabot-py/instabot.py/labels/needs%20help).
+Please feel free to contribute and submit PR requests. All help is appreciated. Look for issues with the label [needs help](https://github.com/instabot-py/instabot.py/labels/needs%20help). If you want to be in developer team, please email me.
 
 ## Instabot with yaml config
-By default, instabot looks for the configuration file (instabot.config.yml)
-it could be changed by exporting environment varibale with the full path
+By default, instabot looks for the configuration file `instabot.config.yml`.
+ It could be changed by exporting environment variable with the full path:
 ````bash
-export INSTABOT_CONFIG_FILE=instabot2.config.yml
+export INSTABOT_CONFIG_FILE=/path/to/file/instabot2.config.yml
 ````
 
 
-````yaml
+```yaml
 
 ---
 login : "username"
@@ -144,12 +133,7 @@ logging.handlers.telegram:
 logging.loggers.InstaBot.handlers:
   - telegram
   - console
-
-follow_time: 1200
-unfollow_per_day: 1000
-follow_per_day: 1000
-
-````
+```
 
 [Create Telegram bot for instabot](https://core.telegram.org/bots#3-how-do-i-create-a-bot)
 
