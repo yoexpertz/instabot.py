@@ -170,8 +170,14 @@ class InstaBot:
 
         self.proxies = self.config.get('proxies')
         if self.proxies:
-            self.s.proxies.update(self.proxies)
-            self.c.proxies.update(self.proxies)
+            self.s.proxies = {
+                'http': self.proxies.get('http_proxy'),
+                'https': self.proxies.get('https_proxy'),
+            }
+            self.c.proxies = {
+                'http': self.proxies.get('http_proxy'),
+                'https': self.proxies.get('https_proxy'),
+            }
 
         # All counters.
         self.like_counter = 0
