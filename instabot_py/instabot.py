@@ -747,7 +747,7 @@ class InstaBot:
             datetime.time(self.end_at_h, self.end_at_m), now.time()
         )
         if not ((dns == 0 or dne < dns) and dne != 0):
-            self.logger.info(f"Pause for {self.ban_sleep_time} seconds")
+            self.logger.info(f"Pause for {self.window_check_every} seconds")
             time.sleep(self.window_check_every)
             return False
         else:
