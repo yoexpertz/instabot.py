@@ -1222,18 +1222,18 @@ class InstaBot:
             return False
 
         if resp.status_code == 200:
-            raw_data = re.search(
-                "window.__additionalDataLoaded\('/p/\w*/',(.*?)\);", resp.text,
-                re.DOTALL).group(1)
-            all_data = json.loads(raw_data)
-
-            if all_data['graphql']['shortcode_media']['owner']['id'] == \
-                    self.user_id:
-                self.logger.debug(f"This media {media_code}, url: {url_check} "
-                                  f"is yours")
-                return False
-
             try:
+                raw_data = re.search(
+                    "window.__additionalDataLoaded\\('/p/\\w*/',(.*?)\\);",
+                    resp.text, re.DOTALL).group(1)
+                all_data = json.loads(raw_data)
+
+                if all_data['graphql']['shortcode_media']['owner']['id'] == \
+                        self.user_id:
+                    self.logger.debug(f"This media {media_code}, url: "
+                                      f"{url_check} is yours")
+                    return False
+
                 edges = all_data['graphql']['shortcode_media'].get(
                     'edge_media_to_comment', None)
                 if not edges:
@@ -1241,16 +1241,21 @@ class InstaBot:
                         'edge_media_to_parent_comment', None)
 
                 comments = list(edges['edges'])
+
+                for comment in comments:
+                    if comment['node']['owner']['id'] == self.user_id:
+                        self.logger.debug(f"This media {media_code}, url: "
+                                          f"{url_check} is already commented by"
+                                          f" you")
+                        return False
+
             except Exception as exc:
                 self.logger.critical(f"Could not retrieve comments from media "
                                      f"{media_code}, url: {url_check}")
+                self.logger.debug(f"Full page output is {resp.text}")
                 self.logger.exception(exc)
+                return False
 
-            for comment in comments:
-                if comment['node']['owner']['id'] == self.user_id:
-                    self.logger.debug(f"This media {media_code}, url: "
-                                      f"{url_check} is already commented")
-                    return False
             return True
 
         elif resp.status_code == 404:
