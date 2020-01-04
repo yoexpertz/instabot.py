@@ -252,6 +252,17 @@ defaults = {'config42': OrderedDict(
 }
 
 
+def configure_logging(config):
+    if config.get('verbosity'):
+        verbosity = int(config.get('verbosity'))
+        if verbosity == 1:
+            level = logging.INFO
+        elif verbosity > 1:
+            level = logging.DEBUG
+        config.set("logging.root.level", level)
+    logging.config.dictConfig(config.get("logging"))
+
+
 def create_configuration():
     if not os.path.isfile('instabot.config.yml'):
         src_dir = os.path.dirname(os.path.realpath(__file__))
@@ -278,16 +289,15 @@ def get_last_version():
     return version
 
 
-def configure_logging(config):
-    if config.get('verbosity'):
-        verbosity = int(config.get('verbosity'))
-        if verbosity == 1:
-            level = logging.INFO
-        elif verbosity > 1:
-            level = logging.DEBUG
-        config.set("logging.root.level", level)
-
-    logging.config.dictConfig(config.get("logging"))
+def verify_configuration(config_file):
+    with open(config_file, 'r') as yml_file:
+        try:
+            yaml.safe_load(yml_file)
+            return True
+        except Exception as e:
+            print(f"Your configuration file {config_file} is not valid YAML "
+                  f"file! Please fix it before start a bot:\n{e}")
+            exit(1)
 
 
 def main():
@@ -331,11 +341,13 @@ case, please run the instabot with '--ignore-updates' flag.""")
             exit(0)
 
     if config_file:
-        print(f"Reading configuration ({len(_config.as_dict())} settings) from"
-              f" {config_file}")
+        if verify_configuration(config_file):
+            print(f"Uploaded {len(_config.as_dict())} settings to a bot's "
+                  f"configuration from {config_file} config file")
     elif os.path.isfile('instabot.config.yml'):
-        print("Using 'instabot.config.yml' as a configuration, add "
-              "'-c your-config.yml' if you want to use your config file")
+        if verify_configuration('instabot.config.yml'):
+            print("Using 'instabot.config.yml' as a configuration, add "
+                  "'-c your-config.yml' if you want to use your config file")
     else:
         print("Configuration file has not been found. Please run the instabot "
               "with '--create-config' flag.")
